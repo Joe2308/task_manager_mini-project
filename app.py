@@ -18,11 +18,20 @@ app.secret_key = os.environ.get("SECRET_KEY")
 
 mongo = PyMongo(app)
 
+
 @app.route("/")
 @app.route("/get_tasks")
 def get_tasks():
     tasks = list(mongo.db.tasks.find())
     return render_template("tasks.html", tasks=tasks)
+
+
+@app.route("/search", methods=["GET", "POST"])
+def search():
+    query = request.form.get("query")
+    tasks = list(mongo.db.tasks.find({"$text": {"$search": query}}))
+    return render_template("tasks.html", tasks=tasks)
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -45,7 +54,7 @@ def register():
         session["user"] = request.form.get("username")
         flash("Registration successfull")
         return redirect(url_for('profile', username=session["user"]))
-    
+          
     return render_template("register.html")
 
 
@@ -150,6 +159,7 @@ def delete_task(task_id):
 def categories():
     categories = list(mongo.db.categories.find().sort("category_name", 1))
     return render_template("categories.html", categories=categories)
+
 
 @app.route("/add_category", methods=["GET", "POST"])
 def add_category():
